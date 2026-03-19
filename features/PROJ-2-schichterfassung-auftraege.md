@@ -1,6 +1,6 @@
 # PROJ-2: Schichterfassung & Auftragserfassung
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-03-19
 **Last Updated:** 2026-03-19
 
@@ -73,7 +73,74 @@
 ---
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Seitenstruktur
+```
+/(app)/page.tsx  — Monatsübersicht
+├── MonthNavigator          (← März 2026 →)
+├── ShiftList
+│   ├── ShiftCard           (Datum | Schichttyp | Aufträge | Std | Überstunden)
+│   └── EmptyState
+├── MonthSummary            (Gesamt-Std + Gesamt-Überstunden)
+└── AddShiftButton
+
+ShiftSheet  (Slide-in Panel)
+├── ShiftForm
+│   ├── DateInput           (HTML native)
+│   ├── ShiftTypeSelector   (Früh / Spät / Nacht)
+│   └── ShiftTimeDisplay    (schreibgeschützt, auto-befüllt)
+├── OverlapWarning          (orange Alert, conditional)
+├── OrderList
+│   ├── OrderCard           (Auftragsnr. | Beschreibung | Zeiten)
+│   └── AddOrderButton
+└── SaveButton + DeleteShiftButton
+
+OrderDialog  (Modal)
+├── Auftragsnummer (Pflicht)
+├── CAD-Nummer (optional, interner Hinweis)
+├── Beschreibung (optional)
+├── Startzeit + Endzeit (optional)
+└── Notiz (optional, interner Hinweis)
+
+DeleteShiftDialog  (AlertDialog, destruktiv)
+```
+
+### Datenmodell
+
+**Tabelle `shifts`**
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID | |
+| user_id | UUID | FK → profiles |
+| schichttyp | früh/spät/nacht | |
+| datum | DATE | Starttag (Nacht = Abendtag) |
+| regulaere_stunden | DECIMAL | 8.75 / 8.5 / 8.5 (fix) |
+| erstellt_am | TIMESTAMPTZ | |
+
+**Tabelle `auftraege`**
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID | |
+| shift_id | UUID | FK → shifts ON DELETE CASCADE |
+| user_id | UUID | FK → profiles (RLS) |
+| auftragsnummer | TEXT | Pflicht |
+| cad_nummer | TEXT | Optional, intern |
+| beschreibung | TEXT | Optional |
+| startzeit | TIME | Optional |
+| endzeit | TIME | Optional |
+| notiz | TEXT | Optional, intern |
+
+Überstunden = live berechnet (Summe Auftragszeiten − reguläre Std), nicht gespeichert.
+
+### Tech-Entscheidungen
+- **Sheet statt Seite**: Slide-in auf Mobile flüssiger als Seitenwechsel
+- **Überlappung client-seitig**: Sofortfeedback + server-seitige Absicherung
+- **Schichtzeiten fix im Code**: Keine DB-Tabelle, keine Admin-Konfiguration
+- **Native date/time Inputs**: Kein extra Paket, nativer mobiler Picker
+- **RLS auf shifts + auftraege**: Nutzer sieht nur eigene Daten
+
+### Abhängigkeiten
+Keine neuen Pakete — alle shadcn/ui-Komponenten bereits installiert.
 
 ## QA Test Results
 _To be added by /qa_
