@@ -215,4 +215,18 @@ The build succeeds with `npm run build` (which uses `next build --webpack`). The
 - **Recommendation:** (1) Replace placeholder icons with real 192x192 and 512x512 PNGs. (2) Implement the offline data layer (IndexedDB + sync) or formally descope it and update the acceptance criteria. (3) Fix SW API caching security issue. (4) Add `skipWaiting()` message to the update prompt flow.
 
 ## Deployment
-_To be added by /deploy_
+
+**Platform:** Vercel (pending user setup)
+**Date:** 2026-03-19
+
+### Environment Variables (add in Vercel Dashboard)
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+### Deploy Command
+```bash
+npx vercel --prod
+```

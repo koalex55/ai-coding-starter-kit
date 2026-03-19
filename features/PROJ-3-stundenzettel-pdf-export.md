@@ -238,4 +238,18 @@ The production build succeeds when using the `--webpack` flag (`npm run build` i
 - **Recommendation:** Fix BUG-2 (repeating header) as it affects usability for workers with many shifts. Clarify BUG-4 with product owner. All other bugs are low priority.
 
 ## Deployment
-_To be added by /deploy_
+
+**Platform:** Vercel (pending user setup)
+**Date:** 2026-03-19
+
+### Environment Variables (add in Vercel Dashboard)
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+### Deploy Command
+```bash
+npx vercel --prod
+```
