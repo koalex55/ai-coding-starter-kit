@@ -28,7 +28,7 @@ export function MonthNavigator({ month, onPrev, onNext }: MonthNavigatorProps) {
         size="icon"
         onClick={onNext}
         className="min-h-[44px] min-w-[44px]"
-        aria-label="Naechster Monat"
+        aria-label="Nächster Monat"
       >
         <ChevronRight className="h-5 w-5" />
       </Button>

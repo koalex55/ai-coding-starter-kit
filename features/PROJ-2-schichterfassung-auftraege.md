@@ -142,6 +142,28 @@ DeleteShiftDialog  (AlertDialog, destruktiv)
 ### Abhängigkeiten
 Keine neuen Pakete — alle shadcn/ui-Komponenten bereits installiert.
 
+## Implementation Notes (Frontend)
+
+**Built on:** 2026-03-19
+
+### Files created/updated:
+- `src/lib/shifts.ts` — SHIFT_CONFIG, calculateOvertime, formatDuration, checkOrderOverlap, isTimeWithinShift, formatShiftDate, formatMonth
+- `src/app/(app)/page.tsx` — Full Monatsübersicht with mock data, month navigation, shift CRUD state management
+- `src/components/shifts/shift-card.tsx` — Shift card with date, type badge (Früh=blue, Spät=orange, Nacht=purple), order count, hours, overtime
+- `src/components/shifts/month-navigator.tsx` — Prev/next month buttons with centered label
+- `src/components/shifts/month-summary.tsx` — Total hours + overtime summary card
+- `src/components/shifts/shift-sheet.tsx` — Sheet (slides from right) for create/edit shift with order management, overlap warnings
+- `src/components/shifts/order-card.tsx` — Compact order card with edit/delete actions
+- `src/components/shifts/order-dialog.tsx` — Modal for add/edit order with react-hook-form + Zod validation
+- `src/components/shifts/delete-shift-dialog.tsx` — Destructive AlertDialog for shift deletion confirmation
+
+### Notes:
+- All Supabase/API calls are stubbed with TODO comments — ready for /backend
+- Mock data array in page.tsx for visual testing
+- Mobile-first: min 44px touch targets, responsive layout
+- German text with proper umlauts throughout
+- Uses shadcn/ui Sheet, Dialog, AlertDialog, Alert, Badge, Card, Button, Input, Textarea, Label, Form
+
 ## QA Test Results
 _To be added by /qa_
 

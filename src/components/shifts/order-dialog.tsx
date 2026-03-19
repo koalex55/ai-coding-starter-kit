@@ -114,12 +114,12 @@ export function OrderDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Auftrag bearbeiten" : "Auftrag hinzufuegen"}
+            {isEditing ? "Auftrag bearbeiten" : "Auftrag hinzufügen"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Aenderungen am Auftrag vornehmen."
-              : "Neuen Auftrag zur Schicht hinzufuegen."}
+              ? "Änderungen am Auftrag vornehmen."
+              : "Neuen Auftrag zur Schicht hinzufügen."}
           </DialogDescription>
         </DialogHeader>
 

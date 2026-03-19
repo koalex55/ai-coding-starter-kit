@@ -10,14 +10,14 @@ export interface ShiftConfig {
 
 export const SHIFT_CONFIG: Record<SchichtTyp, ShiftConfig> = {
   frueh: {
-    label: "Frueh",
+    label: "Früh",
     start: "06:00",
     end: "14:45",
     durationMinutes: 525,
     durationHours: 8.75,
   },
   spaet: {
-    label: "Spaet",
+    label: "Spät",
     start: "13:00",
     end: "21:30",
     durationMinutes: 510,
@@ -33,8 +33,8 @@ export const SHIFT_CONFIG: Record<SchichtTyp, ShiftConfig> = {
 };
 
 export const SHIFT_TYPE_LABELS: Record<SchichtTyp, string> = {
-  frueh: "Frueh",
-  spaet: "Spaet",
+  frueh: "Früh",
+  spaet: "Spät",
   nacht: "Nacht",
 };
 
@@ -176,7 +176,7 @@ export function formatMonth(date: Date): string {
   const months = [
     "Januar",
     "Februar",
-    "Maerz",
+    "März",
     "April",
     "Mai",
     "Juni",

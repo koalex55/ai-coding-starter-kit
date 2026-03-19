@@ -30,7 +30,7 @@ export function MonthSummary({ shifts }: MonthSummaryProps) {
         </span>
         {totalOvertimeMinutes > 0 && (
           <span className="text-sm font-semibold text-green-700">
-            Ueberstunden: {formatDuration(totalOvertimeMinutes, true)}
+            Überstunden: {formatDuration(totalOvertimeMinutes, true)}
           </span>
         )}
       </CardContent>

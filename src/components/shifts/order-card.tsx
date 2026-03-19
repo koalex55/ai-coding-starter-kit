@@ -45,7 +45,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
             size="icon"
             className="min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
             onClick={() => onDelete(order)}
-            aria-label={`Auftrag ${order.auftragsnummer} loeschen`}
+            aria-label={`Auftrag ${order.auftragsnummer} löschen`}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

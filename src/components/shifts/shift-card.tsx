@@ -19,8 +19,8 @@ const SHIFT_BADGE_STYLES: Record<SchichtTyp, string> = {
 };
 
 const SHIFT_LABELS: Record<SchichtTyp, string> = {
-  frueh: "Frueh",
-  spaet: "Spaet",
+  frueh: "Früh",
+  spaet: "Spät",
   nacht: "Nacht",
 };
 
@@ -67,7 +67,7 @@ export function ShiftCard({ shift, onEdit, onDelete }: ShiftCardProps) {
           </Badge>
           <span className="text-sm text-muted-foreground">
             {shift.auftraege.length}{" "}
-            {shift.auftraege.length === 1 ? "Auftrag" : "Auftraege"}
+            {shift.auftraege.length === 1 ? "Auftrag" : "Aufträge"}
           </span>
           <span className="text-sm font-medium">
             {formatDuration(totalMinutes)}
@@ -99,7 +99,7 @@ export function ShiftCard({ shift, onEdit, onDelete }: ShiftCardProps) {
               e.stopPropagation();
               onDelete(shift);
             }}
-            aria-label="Schicht loeschen"
+            aria-label="Schicht löschen"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
