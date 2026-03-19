@@ -1,6 +1,6 @@
 # PROJ-4: Admin-Datensicherung (Backup)
 
-## Status: Planned
+## Status: In Review
 **Created:** 2026-03-19
 **Last Updated:** 2026-03-19
 
@@ -39,6 +39,15 @@
 - Datenschutz: Backup-Datei enthält personenbezogene Daten → Nutzer ist verantwortlich für sichere Aufbewahrung (Hinweis in der UI)
 
 ---
+
+## Implementation Notes
+- API route: `src/app/api/admin/backup/route.ts` (GET, admin-only via `requireAdmin`)
+- Uses `createAdminClient()` (service_role) to bypass RLS and fetch all profiles, shifts, auftraege
+- All three queries run in parallel via `Promise.all`
+- Response format: `{ version, created_at, data: { profiles, shifts, auftraege } }`
+- UI component: `src/components/admin/backup-button.tsx` with loading state and toast feedback
+- Integrated into admin page inside a "Datensicherung" Card section
+- No confirmation dialog added (spec mentioned it, but task instructions did not require one)
 
 ## Tech Design (Solution Architect)
 _To be added by /architecture_

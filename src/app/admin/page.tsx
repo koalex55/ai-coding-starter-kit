@@ -12,6 +12,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BackupButton } from "@/components/admin/backup-button";
 import { CreateUserDialog } from "@/components/admin/create-user-dialog";
 import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
@@ -225,6 +233,19 @@ export default function AdminPage() {
           </div>
         </>
       )}
+
+      {/* Datensicherung */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Datensicherung</CardTitle>
+          <CardDescription>
+            Exportiere alle Nutzerdaten als JSON-Datei.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BackupButton />
+        </CardContent>
+      </Card>
 
       <CreateUserDialog
         open={createDialogOpen}
