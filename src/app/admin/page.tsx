@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,59 +11,56 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateUserDialog } from "@/components/admin/create-user-dialog";
 import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
 import type { UserProfile } from "@/lib/types";
 
-// Mock data for development — TODO: wire up Supabase in /backend
-const MOCK_USERS: UserProfile[] = [
-  {
-    id: "1",
-    personalnummer: "10001",
-    vorname: "Anna",
-    nachname: "Schmidt",
-    rolle: "worker",
-    erstellt_am: "2026-01-15T08:00:00Z",
-  },
-  {
-    id: "2",
-    personalnummer: "10002",
-    vorname: "Thomas",
-    nachname: "Müller",
-    rolle: "worker",
-    erstellt_am: "2026-02-01T09:30:00Z",
-  },
-  {
-    id: "3",
-    personalnummer: "10003",
-    vorname: "Lisa",
-    nachname: "Weber",
-    rolle: "admin",
-    erstellt_am: "2026-01-10T07:00:00Z",
-  },
-];
-
 export default function AdminPage() {
-  const [users] = useState<UserProfile[]>(MOCK_USERS);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [resetPasswordUser, setResetPasswordUser] =
     useState<UserProfile | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserProfile | null>(null);
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await fetch("/api/admin/users");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error ?? "Benutzerliste konnte nicht geladen werden.");
+        return;
+      }
+
+      setUsers(data.users ?? []);
+    } catch {
+      setError("Keine Verbindung zum Server.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   function handleUserCreated() {
-    // TODO: wire up Supabase in /backend — refetch user list
     setCreateDialogOpen(false);
+    fetchUsers();
   }
 
   function handlePasswordReset() {
-    // TODO: wire up Supabase in /backend — call API to reset password
     setResetPasswordUser(null);
   }
 
   function handleUserDeleted() {
-    // TODO: wire up Supabase in /backend — call API to delete user
     setDeleteUser(null);
+    fetchUsers();
   }
 
   function formatDate(isoString: string): string {
@@ -72,6 +69,14 @@ export default function AdminPage() {
       month: "2-digit",
       year: "numeric",
     });
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Wird geladen...</p>
+      </div>
+    );
   }
 
   return (
@@ -91,6 +96,12 @@ export default function AdminPage() {
           Neuen Nutzer erstellen
         </Button>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {users.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">

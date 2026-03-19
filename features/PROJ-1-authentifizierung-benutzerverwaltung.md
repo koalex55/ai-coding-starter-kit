@@ -154,6 +154,45 @@ Konto löschen → Auth + profiles + Schichten + Aufträge werden kaskadierend g
 - Root page.tsx removed; home page lives in (app)/page.tsx route group
 - Settings page inside (app) route group to share authenticated layout
 
+## Backend Implementation Notes
+
+### Supabase Clients
+- `src/lib/supabase/client.ts` -- Browser client via `@supabase/ssr` createBrowserClient (graceful fallback when env vars missing during build)
+- `src/lib/supabase/server.ts` -- Server client via `@supabase/ssr` createServerClient (reads/writes cookies)
+- `src/lib/supabase/admin.ts` -- Admin client using service_role key (server-only, bypasses RLS)
+- `src/lib/supabase/helpers.ts` -- `getAuthenticatedProfile()` and `requireAdmin()` helper functions
+
+### Database Migration
+- `supabase/migrations/001_initial_schema.sql` -- profiles table (UUID PK, personalnummer, vorname, nachname, rolle, erstellt_am) + login_attempts table (for lockout logic)
+- RLS enabled on both tables; profiles has SELECT/UPDATE policies for workers, SELECT-all for admins; login_attempts has no user-facing policies (service_role only)
+- Indexes on profiles(personalnummer) and login_attempts(personalnummer, attempted_at)
+
+### API Routes
+- `POST /api/auth/login` -- Validates input with Zod, checks lockout (5 failed in 15 min), looks up profile by personalnummer, signs in via Supabase Auth, logs attempt, returns profile + mustChangePassword flag
+- `POST /api/auth/change-password` -- Requires auth, validates min 8 chars and not "1234", updates password and clears muss_passwort_aendern flag
+- `DELETE /api/auth/delete-account` -- Requires auth (worker only), re-authenticates with password, deletes auth user (cascades to profiles)
+- `GET /api/admin/users` -- Requires admin, returns all profiles sorted by creation date
+- `POST /api/admin/users` -- Requires admin, validates input, checks personalnummer uniqueness, creates auth user with email alias + default password "1234", inserts profile, rollback on failure
+- `DELETE /api/admin/users/[id]` -- Requires admin, prevents self-deletion, prevents deleting last admin, deletes auth user (cascades)
+- `POST /api/admin/users/[id]/reset-password` -- Requires admin, resets password to "1234", sets muss_passwort_aendern flag
+
+### Middleware
+- `src/middleware.ts` -- Refreshes Supabase session on every request, redirects unauthenticated users to /login, redirects non-admins away from /admin/*, redirects authenticated users from /login to their role-based home page
+
+### Frontend Wiring
+- AuthProvider now uses real Supabase browser client: loads session on mount, listens to auth state changes, login() calls POST /api/auth/login, logout() calls supabase.auth.signOut()
+- Login page calls POST /api/auth/login and redirects based on role
+- Change-password dialog calls POST /api/auth/change-password
+- Settings page delete-account calls DELETE /api/auth/delete-account
+- Admin page fetches user list from GET /api/admin/users on mount
+- Admin layout now uses AuthProvider with real logout
+- Create-user dialog calls POST /api/admin/users
+- Reset-password dialog calls POST /api/admin/users/[id]/reset-password
+- Delete-user dialog calls DELETE /api/admin/users/[id]
+
+### Environment
+- `.env.local.example` created with NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+
 ## QA Test Results
 _To be added by /qa_
 

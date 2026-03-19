@@ -62,16 +62,31 @@ export function CreateUserDialog({
     },
   });
 
-  async function onSubmit(_values: CreateUserFormValues) {
+  async function onSubmit(values: CreateUserFormValues) {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: wire up Supabase in /backend
-      // 1. Call API to create user with email `${personalnummer}@intern.app` and password "1234"
-      // 2. Create profile row with personalnummer, vorname, nachname, rolle: "worker"
-      // 3. Set must_change_password flag in user_metadata
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personalnummer: values.personalnummer,
+          vorname: values.vorname,
+          nachname: values.nachname,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.error ??
+            "Benutzer konnte nicht erstellt werden. Bitte versuche es erneut."
+        );
+        return;
+      }
+
       form.reset();
       onUserCreated();
     } catch {

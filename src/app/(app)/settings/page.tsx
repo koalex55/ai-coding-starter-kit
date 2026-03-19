@@ -54,19 +54,30 @@ export default function SettingsPage() {
     },
   });
 
-  async function onSubmitDelete(_values: DeleteAccountFormValues) {
+  async function onSubmitDelete(values: DeleteAccountFormValues) {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: wire up Supabase in /backend
-      // 1. Verify password by re-authenticating
-      // 2. Call API to delete own account + all related data
-      // 3. Sign out and redirect to login
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch("/api/auth/delete-account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: values.passwort }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.error ??
+            "Konto konnte nicht geloescht werden. Bitte pruefe dein Passwort."
+        );
+        return;
+      }
+
       router.push("/login");
     } catch {
-      setError("Konto konnte nicht gelöscht werden. Bitte prüfe dein Passwort.");
+      setError("Konto konnte nicht geloescht werden. Bitte pruefe dein Passwort.");
     } finally {
       setIsSubmitting(false);
     }

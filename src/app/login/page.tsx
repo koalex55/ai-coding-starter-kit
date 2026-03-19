@@ -49,26 +49,39 @@ export default function LoginPage() {
     },
   });
 
-  async function onSubmit(_values: LoginFormValues) {
+  async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: wire up Supabase in /backend
-      // 1. Sign in with supabase.auth.signInWithPassword({ email: `${personalnummer}@intern.app`, password })
-      // 2. Check rate limiting / lockout (5 failed attempts = 15 min lockout)
-      // 3. Fetch profile to determine role
-      // 4. Check must_change_password flag
-      // 5. Redirect based on role: admin -> /admin, worker -> /
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personalnummer: values.personalnummer,
+          password: values.passwort,
+        }),
+      });
 
-      // Mock: simulate a short delay then redirect
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const data = await response.json();
 
-      // TODO: replace with actual role check
-      router.push("/");
+      if (!response.ok) {
+        setError(
+          data.error ??
+            "Anmeldung fehlgeschlagen. Bitte Personalnummer und Passwort pruefen."
+        );
+        return;
+      }
+
+      // Redirect based on role
+      if (data.profile?.rolle === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch {
       setError(
-        "Anmeldung fehlgeschlagen. Bitte Personalnummer und Passwort prüfen."
+        "Keine Verbindung -- Anmeldung benoetigt Internetverbindung."
       );
     } finally {
       setIsSubmitting(false);

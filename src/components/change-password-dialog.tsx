@@ -63,17 +63,31 @@ export function ChangePasswordDialog({
     },
   });
 
-  async function onSubmit(_values: ChangePasswordFormValues) {
+  async function onSubmit(values: ChangePasswordFormValues) {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: wire up Supabase in /backend — call supabase.auth.updateUser({ password })
-      // TODO: also update user_metadata to set muss_passwort_aendern = false
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: values.neuesPasswort }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.error ??
+            "Passwort konnte nicht geaendert werden. Bitte versuche es erneut."
+        );
+        return;
+      }
+
+      form.reset();
       onPasswordChanged();
     } catch {
-      setError("Passwort konnte nicht geändert werden. Bitte versuche es erneut.");
+      setError("Passwort konnte nicht geaendert werden. Bitte versuche es erneut.");
     } finally {
       setIsSubmitting(false);
     }

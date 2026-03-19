@@ -12,6 +12,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { UserProfile } from "@/lib/types";
 
 interface ResetPasswordDialogProps {
@@ -29,18 +30,31 @@ export function ResetPasswordDialog({
 }: ResetPasswordDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   async function handleReset() {
     if (!user) return;
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      // TODO: wire up Supabase in /backend
-      // 1. Call API to reset user password to "1234"
-      // 2. Set must_change_password flag in user_metadata
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(
+        `/api/admin/users/${user.id}/reset-password`,
+        { method: "POST" }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.error ?? "Passwort konnte nicht zurueckgesetzt werden."
+        );
+        return;
+      }
+
       onPasswordReset();
     } catch {
-      // TODO: show error toast
+      setError("Passwort konnte nicht zurueckgesetzt werden.");
     } finally {
       setIsSubmitting(false);
     }
@@ -61,6 +75,12 @@ export function ResetPasswordDialog({
             ändern.
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel className="min-h-[44px]">
             Abbrechen

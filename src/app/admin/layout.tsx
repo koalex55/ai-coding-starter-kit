@@ -3,20 +3,35 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-
-// TODO: wire up Supabase in /backend — use AuthProvider to check role
-// For now, this layout does not enforce auth; that will be added with the AuthProvider integration.
+import { AuthProvider, useAuth } from "@/components/auth-provider";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+function AdminLayoutInner({ children }: AdminLayoutProps) {
   const router = useRouter();
+  const { isLoading, user, logout } = useAuth();
 
-  function handleLogout() {
-    // TODO: wire up Supabase in /backend — call auth.logout() then redirect
+  async function handleLogout() {
+    await logout();
     router.push("/login");
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Wird geladen...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Bitte melde dich an.</p>
+      </div>
+    );
   }
 
   return (
@@ -37,5 +52,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <Separator />
       <main className="flex-1 p-4 sm:p-6">{children}</main>
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  return (
+    <AuthProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </AuthProvider>
   );
 }
