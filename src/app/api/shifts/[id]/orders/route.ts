@@ -22,16 +22,7 @@ const createOrderSchema = z
   .refine(
     (data) => {
       if (data.startzeit && data.endzeit) {
-        return data.startzeit < data.endzeit || data.endzeit < data.startzeit;
-      }
-      return true;
-    },
-    // We only block identical start/end; for night shifts endzeit < startzeit is valid
-  )
-  .refine(
-    (data) => {
-      if (data.startzeit && data.endzeit && data.startzeit === data.endzeit) {
-        return false;
+        return data.startzeit !== data.endzeit;
       }
       return true;
     },

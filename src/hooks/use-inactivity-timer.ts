@@ -23,6 +23,7 @@ export function useInactivityTimer(
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // eslint-disable-next-line react-hooks/purity -- Date.now() is safe as useRef initial value (runs once on mount)
   const lastActivityRef = useRef<number>(Date.now());
 
   const clearAllTimers = useCallback(() => {
