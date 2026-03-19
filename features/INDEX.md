@@ -12,7 +12,7 @@
 
 | ID | Feature | Status | Spec | Created |
 |----|---------|--------|------|---------|
-| PROJ-1 | Authentifizierung & Benutzerverwaltung | Planned | [PROJ-1](PROJ-1-authentifizierung-benutzerverwaltung.md) | 2026-03-19 |
+| PROJ-1 | Authentifizierung & Benutzerverwaltung | In Progress | [PROJ-1](PROJ-1-authentifizierung-benutzerverwaltung.md) | 2026-03-19 |
 | PROJ-2 | Schichterfassung & Auftragserfassung | Planned | [PROJ-2](PROJ-2-schichterfassung-auftraege.md) | 2026-03-19 |
 | PROJ-3 | Stundenzettel & PDF-Export | Planned | [PROJ-3](PROJ-3-stundenzettel-pdf-export.md) | 2026-03-19 |
 | PROJ-4 | Admin-Datensicherung (Backup) | Planned | [PROJ-4](PROJ-4-admin-backup.md) | 2026-03-19 |

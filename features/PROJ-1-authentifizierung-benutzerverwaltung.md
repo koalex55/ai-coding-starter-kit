@@ -1,6 +1,6 @@
 # PROJ-1: Authentifizierung & Benutzerverwaltung
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-03-19
 **Last Updated:** 2026-03-19
 
@@ -71,7 +71,62 @@
 ---
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Seitenstruktur
+```
+/login
+└── LoginPage
+    ├── LoginForm  (Personalnummer + Passwort)
+    └── ErrorAlert
+
+/admin
+├── AdminLayout + AdminNavigation
+└── AdminPage
+    ├── UserListTable
+    │   ├── UserRow  (Personalnr. | Name | Status | Erstellt am | Aktionen)
+    │   ├── ResetPasswordButton → ResetPasswordDialog
+    │   └── DeleteUserButton    → DeleteUserDialog
+    └── CreateUserButton        → CreateUserDialog
+
+/settings  (Arbeiter)
+└── SettingsPage → DeleteAccountDialog
+
+Globale Komponenten:
+├── AuthProvider         (Session, Rolle, must_change_password-Flag)
+├── ChangePasswordDialog (automatisch beim ersten Login)
+└── InactivityWarning    (erscheint 2 Min. vor Auto-Logout)
+```
+
+### Datenmodell
+
+**Supabase Auth** — Login, Passwörter, Sessions (automatisch verwaltet)
+- Interner Login via `{personalnummer}@intern.app` (für Nutzer unsichtbar)
+- Flag `muss_passwort_aendern` in Auth-Metadaten
+
+**Tabelle `profiles`**
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID | Verknüpfung mit Auth |
+| personalnummer | Text, eindeutig | Login-Name, unveränderlich |
+| vorname | Text | |
+| nachname | Text | |
+| rolle | worker / admin | Zugriffsrolle |
+| erstellt_am | Timestamp | |
+
+Konto löschen → Auth + profiles + Schichten + Aufträge werden kaskadierend gelöscht (RLS + ON DELETE CASCADE).
+
+### Tech-Entscheidungen
+- **Supabase Auth**: Passworthashing, JWT, Sessions out-of-the-box
+- **Personalnummer als E-Mail-Alias**: `{personalnr}@intern.app` — Nutzer sieht nur "Personalnummer"-Feld
+- **RLS**: Arbeiter sieht nur eigene Daten; Admin sieht nur Nutzerliste (nicht Schichten)
+- **Server-API für Admin-Aktionen**: Passwort-Reset und Konto löschen laufen über geschützten API-Endpunkt (service_role key nie im Browser)
+- **React AuthProvider**: Hält Session + Rolle + Flag im Memory
+- **Client-seitiger Inaktivitäts-Timer**: Event-Listener auf mousemove/keydown/click/scroll
+
+### Abhängigkeiten
+- `@supabase/supabase-js` (wahrscheinlich bereits installiert)
+- `@supabase/ssr` (Next.js SSR-Helfer)
+- Alle UI-Komponenten bereits via shadcn/ui vorhanden
 
 ## QA Test Results
 _To be added by /qa_
