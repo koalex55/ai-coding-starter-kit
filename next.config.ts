@@ -1,11 +1,4 @@
 import type { NextConfig } from "next";
-import withPWAInit from "@ducanh2912/next-pwa";
-
-const withPWA = withPWAInit({
-  dest: "public",
-  register: true,
-  disable: process.env.NODE_ENV === "development",
-});
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -22,8 +15,16 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript" },
+          { key: "Service-Worker-Allowed", value: "/" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
     ];
   },
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;

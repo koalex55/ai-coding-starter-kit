@@ -38,6 +38,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# PWA generated files (generated at build time by next-pwa)
-/public/sw.js
+# PWA generated files (generated at build time by next-pwa, no longer used)
 /public/workbox-*.js
