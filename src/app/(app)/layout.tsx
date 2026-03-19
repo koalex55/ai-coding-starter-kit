@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { AuthProvider, useAuth } from "@/components/auth-provider";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { InactivityWarning } from "@/components/inactivity-warning";
+import { PwaUpdatePrompt } from "@/components/pwa-update-prompt";
 import { useInactivityTimer } from "@/hooks/use-inactivity-timer";
 
 interface AppLayoutProps {
@@ -100,6 +101,9 @@ function AppLayoutInner({ children }: AppLayoutProps) {
         remainingSeconds={remainingSeconds}
         onStayActive={resetTimer}
       />
+
+      <PwaUpdatePrompt />
+      {/* TODO PROJ-5: Full offline data sync via IndexedDB - future enhancement */}
     </div>
   );
 }

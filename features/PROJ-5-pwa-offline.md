@@ -1,6 +1,6 @@
 # PROJ-5: PWA & Offline-Funktionalität
 
-## Status: Planned
+## Status: In Review
 **Created:** 2026-03-19
 **Last Updated:** 2026-03-19
 
@@ -55,6 +55,20 @@
 - Icons: `public/icons/` (mind. 192×192 und 512×512 PNG)
 
 ---
+
+## Implementation Notes (Frontend)
+
+### What was built
+1. **next-pwa integration** (`next.config.ts`): Wraps the Next.js config with `withPWA` for automatic service worker generation. Disabled in development to avoid SW caching issues.
+2. **Web App Manifest** (`public/manifest.json`): Defines app name ("Stundenzettel"), theme color, display mode (standalone), orientation (portrait), and icon references.
+3. **Placeholder icons** (`public/icons/icon-192.png`, `public/icons/icon-512.png`): Minimal 1x1 placeholder PNGs. Replace with real branded icons before production.
+4. **PWA meta tags** (`src/app/layout.tsx`): Added manifest link, theme-color, Apple Web App meta tags, and apple-touch-icon for iOS support.
+5. **Update notification** (`src/components/pwa-update-prompt.tsx`): Listens for service worker `controllerchange`, `updatefound`, and checks for waiting SW on mount. Shows a persistent sonner toast with "Jetzt aktualisieren" action that reloads the page.
+6. **Layout integration** (`src/app/(app)/layout.tsx`): `PwaUpdatePrompt` rendered inside the authenticated layout.
+
+### What is deferred
+- Full offline data sync via IndexedDB (read/write shifts offline, background sync with Supabase) is deferred as a future enhancement. A TODO comment is left in the app layout.
+- Real app icons (192x192 and 512x512) need to be designed and replaced.
 
 ## Tech Design (Solution Architect)
 _To be added by /architecture_
