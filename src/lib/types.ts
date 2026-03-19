@@ -13,3 +13,29 @@ export interface AuthUser {
   id: string;
   email: string;
 }
+
+// --- PROJ-2: Schichterfassung & Auftragserfassung ---
+
+export type SchichtTyp = "frueh" | "spaet" | "nacht";
+
+export interface Auftrag {
+  id: string;
+  shift_id: string;
+  user_id: string;
+  auftragsnummer: string;
+  cad_nummer?: string;
+  beschreibung?: string;
+  startzeit?: string; // HH:mm format
+  endzeit?: string;   // HH:mm format
+  notiz?: string;
+}
+
+export interface Schicht {
+  id: string;
+  user_id: string;
+  schichttyp: SchichtTyp;
+  datum: string; // YYYY-MM-DD
+  regulaere_stunden: number; // decimal hours (8.75 / 8.5)
+  erstellt_am: string;
+  auftraege: Auftrag[];
+}
