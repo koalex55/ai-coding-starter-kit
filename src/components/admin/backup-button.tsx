@@ -4,6 +4,17 @@ import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function BackupButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -46,18 +57,33 @@ export function BackupButton() {
 
   return (
     <div className="space-y-3">
-      <Button
-        onClick={handleBackup}
-        disabled={isLoading}
-        className="min-h-[44px]"
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Download className="mr-2 h-4 w-4" />
-        )}
-        Backup erstellen
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button disabled={isLoading} className="min-h-[44px]">
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Backup erstellen
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Datensicherung erstellen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Das Backup enthält alle Nutzerdaten, Schichten und Aufträge.
+              Bitte sicher aufbewahren und nicht weitergeben.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBackup}>
+              Backup herunterladen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <p className="text-xs text-muted-foreground">
         Das Backup enthält personenbezogene Daten. Bitte sicher aufbewahren.
       </p>
