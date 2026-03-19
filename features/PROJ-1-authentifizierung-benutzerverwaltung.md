@@ -128,6 +128,32 @@ Konto löschen → Auth + profiles + Schichten + Aufträge werden kaskadierend g
 - `@supabase/ssr` (Next.js SSR-Helfer)
 - Alle UI-Komponenten bereits via shadcn/ui vorhanden
 
+## Frontend Implementation Notes
+
+### Pages built
+- `/login` — Login page with centered card, Personalnummer + Passwort fields, Zod validation, error alert
+- `/admin` — Admin layout (top nav + Abmelden) + user list table with responsive mobile card layout
+- `/settings` — Settings page with "Gefahrenzone" card and delete account dialog (password confirmation)
+- `/(app)` — Authenticated worker layout with top nav (Einstellungen + Abmelden), AuthProvider, ChangePasswordDialog, InactivityWarning
+
+### Components built
+- `src/components/admin/create-user-dialog.tsx` — Create user form (Personalnummer, Vorname, Nachname), info about default password
+- `src/components/admin/reset-password-dialog.tsx` — Confirmation dialog showing user name, resets to 1234
+- `src/components/admin/delete-user-dialog.tsx` — Destructive alert dialog with warning text
+
+### Pre-existing components (from architecture phase)
+- `src/components/auth-provider.tsx` — AuthContext with mock login/logout (fixed German umlauts)
+- `src/components/change-password-dialog.tsx` — Modal dialog, cannot be dismissed (fixed German umlauts)
+- `src/components/inactivity-warning.tsx` — Alert dialog with countdown (fixed German umlauts)
+- `src/hooks/use-inactivity-timer.ts` — Client-side inactivity timer with 28min warning + 30min logout
+
+### Design decisions
+- Mobile-first: all touch targets min 44px, responsive table/card layout for admin user list
+- All text in German with proper umlauts
+- All Supabase calls stubbed with TODO comments for /backend skill
+- Root page.tsx removed; home page lives in (app)/page.tsx route group
+- Settings page inside (app) route group to share authenticated layout
+
 ## QA Test Results
 _To be added by /qa_
 

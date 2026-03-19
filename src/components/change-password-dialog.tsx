@@ -33,7 +33,7 @@ const changePasswordSchema = z
     passwortBestaetigen: z.string(),
   })
   .refine((data) => data.neuesPasswort === data.passwortBestaetigen, {
-    message: "Die Passworter stimmen nicht uberein",
+    message: "Die Passwörter stimmen nicht überein",
     path: ["passwortBestaetigen"],
   })
   .refine((data) => data.neuesPasswort !== "1234", {
@@ -73,7 +73,7 @@ export function ChangePasswordDialog({
       await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
       onPasswordChanged();
     } catch {
-      setError("Passwort konnte nicht geandert werden. Bitte versuche es erneut.");
+      setError("Passwort konnte nicht geändert werden. Bitte versuche es erneut.");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,9 +89,9 @@ export function ChangePasswordDialog({
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Passwort andern</DialogTitle>
+          <DialogTitle>Passwort ändern</DialogTitle>
           <DialogDescription>
-            Bitte andere dein Standard-Passwort, um dein Konto zu sichern.
+            Bitte ändere dein Standard-Passwort, um dein Konto zu sichern.
           </DialogDescription>
         </DialogHeader>
 
@@ -127,7 +127,7 @@ export function ChangePasswordDialog({
               name="passwortBestaetigen"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Passwort bestatigen</FormLabel>
+                  <FormLabel>Passwort bestätigen</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -147,7 +147,7 @@ export function ChangePasswordDialog({
                 disabled={isSubmitting}
                 className="w-full min-h-[44px]"
               >
-                {isSubmitting ? "Wird geandert..." : "Passwort andern"}
+                {isSubmitting ? "Wird geändert..." : "Passwort ändern"}
               </Button>
             </DialogFooter>
           </form>

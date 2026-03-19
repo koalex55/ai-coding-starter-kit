@@ -32,7 +32,7 @@ export function InactivityWarning({
     <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Inaktivitatswarnung</AlertDialogTitle>
+          <AlertDialogTitle>Inaktivitätswarnung</AlertDialogTitle>
           <AlertDialogDescription>
             Du wirst in {timeDisplay} abgemeldet. Jetzt aktiv bleiben?
           </AlertDialogDescription>
