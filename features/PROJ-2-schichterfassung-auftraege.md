@@ -1,6 +1,6 @@
 # PROJ-2: Schichterfassung & Auftragserfassung
 
-## Status: In Progress
+## Status: In Review
 **Created:** 2026-03-19
 **Last Updated:** 2026-03-19
 
