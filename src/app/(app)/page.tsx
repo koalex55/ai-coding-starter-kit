@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
@@ -10,6 +10,7 @@ import { ShiftCard } from "@/components/shifts/shift-card";
 import { MonthSummary } from "@/components/shifts/month-summary";
 import { ShiftSheet } from "@/components/shifts/shift-sheet";
 import { DeleteShiftDialog } from "@/components/shifts/delete-shift-dialog";
+import { ExportDialog } from "@/components/pdf/export-dialog";
 import type { Schicht, SchichtTyp, Auftrag } from "@/lib/types";
 
 export default function HomePage() {
@@ -32,6 +33,9 @@ export default function HomePage() {
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingShift, setDeletingShift] = useState<Schicht | null>(null);
+
+  // Export dialog state
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // Fetch shifts for current month
   const fetchShifts = useCallback(async () => {
@@ -129,19 +133,30 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      {/* Header with greeting and add button */}
+      {/* Header with greeting and action buttons */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">
           Willkommen{profile ? `, ${profile.vorname}` : ""}
         </h2>
-        <Button
-          onClick={handleCreateShift}
-          className="min-h-[44px] gap-1"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Schicht erfassen</span>
-          <span className="sm:hidden">Neu</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setExportDialogOpen(true)}
+            className="min-h-[44px] gap-1"
+            aria-label="Stundenzettel exportieren"
+          >
+            <FileDown className="h-4 w-4" />
+            <span className="hidden sm:inline">Exportieren</span>
+          </Button>
+          <Button
+            onClick={handleCreateShift}
+            className="min-h-[44px] gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Schicht erfassen</span>
+            <span className="sm:hidden">Neu</span>
+          </Button>
+        </div>
       </div>
 
       {/* Month navigator */}
@@ -206,6 +221,13 @@ export default function HomePage() {
         onOpenChange={setDeleteDialogOpen}
         shift={deletingShift}
         onConfirm={handleConfirmDelete}
+      />
+
+      {/* PDF export dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        initialMonth={currentMonth}
       />
     </div>
   );
