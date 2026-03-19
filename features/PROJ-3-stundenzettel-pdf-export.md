@@ -1,6 +1,6 @@
 # PROJ-3: Stundenzettel & PDF-Export
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-03-19
 **Last Updated:** 2026-03-19
 
@@ -54,7 +54,46 @@
 ---
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Komponenten-Struktur
+```
+/(app)/page.tsx
+└── ExportButton → ExportDialog
+
+ExportDialog (Modal)
+├── MonthPicker (Monat + Jahr Dropdowns)
+├── EmptyState ("Keine Schichten für diesen Monat")
+├── PreviewSection (PDFViewer, optional)
+└── DownloadButton ("PDF herunterladen")
+
+TimesheetDocument (PDF-Komponente, nie im DOM)
+└── Page (A4, Hochformat)
+    ├── Header (Titel, Name, Personalnummer, Monat/Jahr)
+    ├── ShiftsTable
+    │   ├── Kopfzeile: Datum | Schichttyp | Reg. Std | Überstunden
+    │   ├── SchichtZeile (eine pro Schicht)
+    │   └── AuftragsZeilen (Auftragsnr. | Beschreibung | Zeit)
+    │       kein CAD, keine Notiz
+    ├── SummaryRow (Gesamt-Std | Gesamt-Überstunden)
+    └── SignatureLine ("Unterschrift: _______  Datum: _______")
+```
+
+### Datenfluss
+Kein neues Datenbankschema — reuse von GET /api/shifts?year=X&month=Y:
+1. ExportDialog lädt Schichtdaten
+2. TimesheetDocument rendert PDF im Speicher
+3. Blob → URL.createObjectURL → Browser-Download
+4. Dateiname: `Stundenzettel_[Nachname]_[YYYY-MM].pdf`
+
+### Tech-Entscheidungen
+- **`@react-pdf/renderer`**: PDF als React-Komponente, automatischer Seitenumbruch
+- **Kein neuer API-Endpunkt**: bestehender `/api/shifts` reicht aus
+- **Client-seitige Generierung**: kein Server-Aufwand, kein Datei-Speichern
+- **Dynamic Import**: Paket nur beim Öffnen des Dialogs laden
+- **Blob + Download-Link**: iOS/Android/Desktop kompatibel
+
+### Abhängigkeiten
+- `@react-pdf/renderer` — React-basierte PDF-Generierung
 
 ## QA Test Results
 _To be added by /qa_
