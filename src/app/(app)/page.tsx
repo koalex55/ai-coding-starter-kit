@@ -37,6 +37,22 @@ export default function HomePage() {
   // Export dialog state
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
+  // Show toast if user was auto-logged out with a saved draft
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("auto_logout") === "1") {
+        localStorage.removeItem("auto_logout");
+        if (localStorage.getItem("shift_draft")) {
+          toast.info(
+            "Deine Eingaben wurden zwischengespeichert. Oeffne eine neue Schicht um fortzufahren."
+          );
+        }
+      }
+    } catch {
+      // localStorage unavailable — ignore
+    }
+  }, []);
+
   // Fetch shifts for current month
   const fetchShifts = useCallback(async () => {
     setIsLoading(true);

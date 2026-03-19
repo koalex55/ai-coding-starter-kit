@@ -33,6 +33,7 @@ export default function AdminPage() {
   const [resetPasswordUser, setResetPasswordUser] =
     useState<UserProfile | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserProfile | null>(null);
+  const [togglingStatus, setTogglingStatus] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -69,6 +70,28 @@ export default function AdminPage() {
   function handleUserDeleted() {
     setDeleteUser(null);
     fetchUsers();
+  }
+
+  async function handleToggleStatus(user: UserProfile) {
+    try {
+      setTogglingStatus(user.id);
+      setError(null);
+      const response = await fetch(`/api/admin/users/${user.id}/toggle-status`, {
+        method: "PATCH",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error ?? "Status konnte nicht geaendert werden.");
+        return;
+      }
+
+      fetchUsers();
+    } catch {
+      setError("Keine Verbindung zum Server.");
+    } finally {
+      setTogglingStatus(null);
+    }
   }
 
   function formatDate(isoString: string): string {
@@ -134,6 +157,7 @@ export default function AdminPage() {
                   <TableHead>Personalnr.</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Rolle</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Erstellt am</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
@@ -156,9 +180,29 @@ export default function AdminPage() {
                         {user.rolle === "admin" ? "Admin" : "Arbeiter"}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={user.aktiv ? "default" : "destructive"}
+                      >
+                        {user.aktiv ? "Aktiv" : "Gesperrt"}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{formatDate(user.erstellt_am)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleStatus(user)}
+                          disabled={togglingStatus === user.id}
+                          className="min-h-[44px]"
+                        >
+                          {togglingStatus === user.id
+                            ? "..."
+                            : user.aktiv
+                              ? "Sperren"
+                              : "Aktivieren"}
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -199,18 +243,38 @@ export default function AdminPage() {
                       {user.personalnummer}
                     </p>
                   </div>
-                  <Badge
-                    variant={
-                      user.rolle === "admin" ? "default" : "secondary"
-                    }
-                  >
-                    {user.rolle === "admin" ? "Admin" : "Arbeiter"}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge
+                      variant={
+                        user.rolle === "admin" ? "default" : "secondary"
+                      }
+                    >
+                      {user.rolle === "admin" ? "Admin" : "Arbeiter"}
+                    </Badge>
+                    <Badge
+                      variant={user.aktiv ? "default" : "destructive"}
+                    >
+                      {user.aktiv ? "Aktiv" : "Gesperrt"}
+                    </Badge>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Erstellt am {formatDate(user.erstellt_am)}
                 </p>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleStatus(user)}
+                    disabled={togglingStatus === user.id}
+                    className="flex-1 min-h-[44px]"
+                  >
+                    {togglingStatus === user.id
+                      ? "..."
+                      : user.aktiv
+                        ? "Sperren"
+                        : "Aktivieren"}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -239,7 +303,7 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle className="text-lg">Datensicherung</CardTitle>
           <CardDescription>
-            Exportiere alle Nutzerdaten als JSON-Datei.
+            Exportiere alle Nutzerdaten als JSON- oder CSV-Datei.
           </CardDescription>
         </CardHeader>
         <CardContent>

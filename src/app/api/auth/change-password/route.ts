@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const changePasswordSchema = z.object({
   newPassword: z
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest) {
       { error: "Nicht authentifiziert." },
       { status: 401 }
     );
+  }
+
+  // Rate limit: max 5 requests per 15 minutes per user
+  if (!rateLimit(`change-password:${user.id}`, 5, 15 * 60 * 1000)) {
+    return rateLimitResponse();
   }
 
   // --- Update password ---

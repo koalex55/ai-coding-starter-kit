@@ -34,6 +34,15 @@ export async function POST(request: NextRequest) {
   const { personalnummer, password } = parsed.data;
   const admin = createAdminClient();
 
+  // --- Cleanup old login_attempts (older than 24h) to prevent unbounded growth ---
+  await admin
+    .from("login_attempts")
+    .delete()
+    .lt(
+      "attempted_at",
+      new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    );
+
   // --- Check lockout ---
   const windowStart = new Date(
     Date.now() - LOCKOUT_WINDOW_MINUTES * 60 * 1000

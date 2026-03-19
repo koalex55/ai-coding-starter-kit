@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const deleteAccountSchema = z.object({
   password: z.string().min(1, "Passwort ist erforderlich"),
@@ -41,6 +42,11 @@ export async function DELETE(request: NextRequest) {
       { error: "Nicht authentifiziert." },
       { status: 401 }
     );
+  }
+
+  // Rate limit: max 3 requests per hour per user
+  if (!rateLimit(`delete-account:${user.id}`, 3, 60 * 60 * 1000)) {
+    return rateLimitResponse();
   }
 
   // --- Re-authenticate to verify password ---

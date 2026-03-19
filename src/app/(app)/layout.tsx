@@ -20,6 +20,11 @@ function AppLayoutInner({ children }: AppLayoutProps) {
     useAuth();
 
   const handleTimeout = useCallback(() => {
+    try {
+      localStorage.setItem("auto_logout", "1");
+    } catch {
+      // localStorage may be unavailable — silently ignore
+    }
     logout().then(() => {
       router.push("/login");
     });

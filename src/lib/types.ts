@@ -6,6 +6,7 @@ export interface UserProfile {
   vorname: string;
   nachname: string;
   rolle: UserRole;
+  aktiv: boolean;
   erstellt_am: string;
 }
 

@@ -58,8 +58,15 @@ function formatMonthYear(date: Date): string {
 const styles = StyleSheet.create({
   page: {
     padding: 30,
+    paddingTop: 140,
     fontFamily: "Helvetica",
     fontSize: 10,
+  },
+  fixedHeader: {
+    position: "absolute",
+    top: 30,
+    left: 30,
+    right: 30,
   },
   // Header
   headerTitle: {
@@ -174,29 +181,31 @@ export function TimesheetDocument({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <Text style={styles.headerTitle}>Stundenzettel</Text>
-        <Text style={styles.headerName}>
-          {profile.vorname} {profile.nachname}
-        </Text>
-        <Text style={styles.headerMeta}>
-          Personalnr.: {profile.personalnummer}
-        </Text>
-        <Text style={styles.headerMeta}>{formatMonthYear(month)}</Text>
-        <View style={styles.headerSpacer} />
+        {/* Fixed header — repeats on every page */}
+        <View fixed style={styles.fixedHeader}>
+          <Text style={styles.headerTitle}>Stundenzettel</Text>
+          <Text style={styles.headerName}>
+            {profile.vorname} {profile.nachname}
+          </Text>
+          <Text style={styles.headerMeta}>
+            Personalnr.: {profile.personalnummer}
+          </Text>
+          <Text style={styles.headerMeta}>{formatMonthYear(month)}</Text>
+          <View style={styles.headerSpacer} />
 
-        {/* Table header */}
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderText, styles.colDatum]}>Datum</Text>
-          <Text style={[styles.tableHeaderText, styles.colTyp]}>
-            Schichttyp
-          </Text>
-          <Text style={[styles.tableHeaderText, styles.colStunden]}>
-            Reg. Stunden
-          </Text>
-          <Text style={[styles.tableHeaderText, styles.colUeberstunden]}>
-            Überstunden
-          </Text>
+          {/* Table column header */}
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderText, styles.colDatum]}>Datum</Text>
+            <Text style={[styles.tableHeaderText, styles.colTyp]}>
+              Schichttyp
+            </Text>
+            <Text style={[styles.tableHeaderText, styles.colStunden]}>
+              Reg. Stunden
+            </Text>
+            <Text style={[styles.tableHeaderText, styles.colUeberstunden]}>
+              Überstunden
+            </Text>
+          </View>
         </View>
 
         {/* Shift rows */}
@@ -234,13 +243,13 @@ export function TimesheetDocument({
               {/* Order sub-rows */}
               {shift.auftraege.map((auftrag) => (
                 <View key={auftrag.id} style={styles.orderRow}>
-                  <Text style={[styles.colOrderNr, { fontSize: 8 }]}>
+                  <Text style={[styles.colOrderNr, { fontSize: 10 }]}>
                     {auftrag.auftragsnummer}
                   </Text>
-                  <Text style={[styles.colOrderBeschreibung, { fontSize: 8 }]}>
+                  <Text style={[styles.colOrderBeschreibung, { fontSize: 10 }]}>
                     {auftrag.beschreibung ?? ""}
                   </Text>
-                  <Text style={[styles.colOrderZeit, { fontSize: 8 }]}>
+                  <Text style={[styles.colOrderZeit, { fontSize: 10 }]}>
                     {auftrag.startzeit && auftrag.endzeit
                       ? `${auftrag.startzeit}\u2013${auftrag.endzeit}`
                       : ""}
@@ -259,14 +268,14 @@ export function TimesheetDocument({
               {formatDuration(totalMinutes)}
             </Text>
           </View>
-          {totalOvertimeMinutes > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Überstunden gesamt:</Text>
-              <Text style={styles.summaryValue}>
-                {formatDuration(totalOvertimeMinutes, true)}
-              </Text>
-            </View>
-          )}
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Überstunden gesamt:</Text>
+            <Text style={styles.summaryValue}>
+              {totalOvertimeMinutes > 0
+                ? formatDuration(totalOvertimeMinutes, true)
+                : "0:00h"}
+            </Text>
+          </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Fehlstunden:</Text>
             <Text style={styles.summaryValue}>{"\u2014"}</Text>

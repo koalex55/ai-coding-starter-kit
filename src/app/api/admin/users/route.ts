@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/supabase/helpers";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // --- GET: list all users (admin only) ---
 
@@ -38,6 +39,11 @@ const createUserSchema = z.object({
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
+
+  // Rate limit: max 20 requests per hour per user
+  if (!rateLimit(`create-user:${auth.userId}`, 20, 60 * 60 * 1000)) {
+    return rateLimitResponse();
+  }
 
   // --- Validate input ---
   let body: unknown;

@@ -22,6 +22,7 @@ import {
 import type { Schicht, SchichtTyp, Auftrag } from "@/lib/types";
 import { OrderCard } from "@/components/shifts/order-card";
 import { OrderDialog } from "@/components/shifts/order-dialog";
+import { useShiftDraft } from "@/hooks/use-shift-draft";
 
 type SheetMode = "create" | "edit";
 
@@ -55,6 +56,9 @@ export function ShiftSheet({
   const [auftraege, setAuftraege] = useState<Auftrag[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Draft persistence
+  const { saveDraft, loadDraft, clearDraft } = useShiftDraft();
+
   // Order dialog state
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Auftrag | null>(null);
@@ -67,12 +71,27 @@ export function ShiftSheet({
         setSchichttyp(shift.schichttyp);
         setAuftraege([...shift.auftraege]);
       } else {
-        setDatum(new Date().toISOString().slice(0, 10));
-        setSchichttyp("frueh");
-        setAuftraege([]);
+        // Check for saved draft when creating a new shift
+        const draft = loadDraft();
+        if (draft) {
+          setDatum(draft.datum);
+          setSchichttyp(draft.schichttyp);
+          setAuftraege(draft.auftraege ?? []);
+        } else {
+          setDatum(new Date().toISOString().slice(0, 10));
+          setSchichttyp("frueh");
+          setAuftraege([]);
+        }
       }
     }
-  }, [open, mode, shift]);
+  }, [open, mode, shift]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save draft whenever form values change (only in create mode)
+  useEffect(() => {
+    if (open && mode === "create") {
+      saveDraft({ schichttyp, datum, auftraege });
+    }
+  }, [open, mode, schichttyp, datum, auftraege]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const overlaps = checkOrderOverlap(auftraege);
 
@@ -203,6 +222,7 @@ export function ShiftSheet({
         toast.success("Schicht aktualisiert.");
       }
 
+      clearDraft();
       onOpenChange(false);
       onSaved();
     } catch (err) {
@@ -256,9 +276,17 @@ export function ShiftSheet({
     }
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen && mode === "create") {
+      // User closed the sheet manually (cancel) — clear draft
+      clearDraft();
+    }
+    onOpenChange(nextOpen);
+  }
+
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent
           side="right"
           className="flex w-full flex-col overflow-y-auto sm:max-w-lg"

@@ -9,32 +9,38 @@ export function PwaUpdatePrompt() {
       return;
     }
 
+    let waitingWorker: ServiceWorker | null = null;
+
+    function activateUpdate() {
+      // Tell the waiting SW to skip waiting and take control
+      if (waitingWorker) {
+        waitingWorker.postMessage({ type: "SKIP_WAITING" });
+      }
+      window.location.reload();
+    }
+
     function showUpdateToast() {
       toast("Update verfügbar", {
-        description:
-          "Eine neue Version der App ist bereit.",
+        description: "Eine neue Version der App ist bereit.",
         duration: Infinity,
         action: {
           label: "Jetzt aktualisieren",
-          onClick: () => {
-            window.location.reload();
-          },
+          onClick: activateUpdate,
         },
       });
     }
 
-    // Listen for a new service worker taking control
+    // Reload once the new SW has taken control
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      showUpdateToast();
+      window.location.reload();
     });
 
-    // Check if there is already a waiting service worker
     navigator.serviceWorker.ready.then((registration) => {
       if (registration.waiting) {
+        waitingWorker = registration.waiting;
         showUpdateToast();
       }
 
-      // Listen for future updates
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
         if (!newWorker) return;
@@ -44,6 +50,7 @@ export function PwaUpdatePrompt() {
             newWorker.state === "installed" &&
             navigator.serviceWorker.controller
           ) {
+            waitingWorker = newWorker;
             showUpdateToast();
           }
         });
