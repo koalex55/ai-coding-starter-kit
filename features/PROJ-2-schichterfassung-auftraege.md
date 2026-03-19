@@ -164,6 +164,31 @@ Keine neuen Pakete — alle shadcn/ui-Komponenten bereits installiert.
 - German text with proper umlauts throughout
 - Uses shadcn/ui Sheet, Dialog, AlertDialog, Alert, Badge, Card, Button, Input, Textarea, Label, Form
 
+## Implementation Notes (Backend)
+
+**Built on:** 2026-03-19
+
+### Database migration:
+- `supabase/migrations/002_shifts_and_orders.sql` — shifts + auftraege tables with RLS policies, indexes, and constraints
+
+### API routes created/updated:
+- `src/app/api/shifts/route.ts` — GET (list with year/month filter, nested auftraege) + POST (create with uniqueness check, auto regulaere_stunden)
+- `src/app/api/shifts/[id]/route.ts` — GET (single with nested auftraege) + PUT (update schichttyp/datum with conflict check) + DELETE (cascade)
+- `src/app/api/shifts/[id]/orders/route.ts` — GET (list orders for shift) + POST (create order with Zod validation, soft time warnings)
+- `src/app/api/shifts/[id]/orders/[orderId]/route.ts` — PUT (update order fields) + DELETE (delete order)
+
+### Frontend wiring:
+- `src/app/(app)/page.tsx` — Replaced mock data with real API fetch, loading spinner, toast errors via sonner, all CRUD wired to API
+- `src/components/shifts/shift-sheet.tsx` — Full API integration for create/edit shift + order CRUD sync (create/update/delete), saving indicator
+- `src/app/layout.tsx` — Added Sonner Toaster component
+
+### Notes:
+- All API routes verify auth.uid() before any DB operation
+- Zod validation on all POST/PUT bodies
+- German error messages throughout
+- Soft warnings for times outside shift window (still saves)
+- Order sync in edit mode: compares existing vs current orders to determine create/update/delete operations
+
 ## QA Test Results
 _To be added by /qa_
 

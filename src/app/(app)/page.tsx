@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
 import { MonthNavigator } from "@/components/shifts/month-navigator";
@@ -11,130 +12,17 @@ import { ShiftSheet } from "@/components/shifts/shift-sheet";
 import { DeleteShiftDialog } from "@/components/shifts/delete-shift-dialog";
 import type { Schicht, SchichtTyp, Auftrag } from "@/lib/types";
 
-// --- Mock data for development (TODO: replace with Supabase queries in /backend) ---
-const MOCK_SHIFTS: Schicht[] = [
-  {
-    id: "1",
-    user_id: "mock-user",
-    schichttyp: "frueh",
-    datum: "2026-03-02",
-    regulaere_stunden: 8.75,
-    erstellt_am: "2026-03-02T07:00:00Z",
-    auftraege: [
-      {
-        id: "a1",
-        shift_id: "1",
-        user_id: "mock-user",
-        auftragsnummer: "A-1001",
-        beschreibung: "Gehäuse fräsen",
-        startzeit: "06:00",
-        endzeit: "10:30",
-      },
-      {
-        id: "a2",
-        shift_id: "1",
-        user_id: "mock-user",
-        auftragsnummer: "B-2045",
-        beschreibung: "Welle drehen",
-        startzeit: "10:30",
-        endzeit: "14:45",
-      },
-    ],
-  },
-  {
-    id: "2",
-    user_id: "mock-user",
-    schichttyp: "spaet",
-    datum: "2026-03-03",
-    regulaere_stunden: 8.5,
-    erstellt_am: "2026-03-03T14:00:00Z",
-    auftraege: [
-      {
-        id: "a3",
-        shift_id: "2",
-        user_id: "mock-user",
-        auftragsnummer: "C-3010",
-        beschreibung: "Montage Baugruppe",
-        startzeit: "13:00",
-        endzeit: "18:00",
-      },
-    ],
-  },
-  {
-    id: "3",
-    user_id: "mock-user",
-    schichttyp: "nacht",
-    datum: "2026-03-05",
-    regulaere_stunden: 8.5,
-    erstellt_am: "2026-03-05T22:00:00Z",
-    auftraege: [
-      {
-        id: "a4",
-        shift_id: "3",
-        user_id: "mock-user",
-        auftragsnummer: "D-4100",
-        startzeit: "21:30",
-        endzeit: "03:00",
-      },
-      {
-        id: "a5",
-        shift_id: "3",
-        user_id: "mock-user",
-        auftragsnummer: "E-5200",
-        beschreibung: "Qualitätskontrolle",
-        startzeit: "03:00",
-        endzeit: "06:00",
-      },
-    ],
-  },
-  {
-    id: "4",
-    user_id: "mock-user",
-    schichttyp: "frueh",
-    datum: "2026-03-10",
-    regulaere_stunden: 8.75,
-    erstellt_am: "2026-03-10T07:00:00Z",
-    auftraege: [],
-  },
-  {
-    id: "5",
-    user_id: "mock-user",
-    schichttyp: "spaet",
-    datum: "2026-03-17",
-    regulaere_stunden: 8.5,
-    erstellt_am: "2026-03-17T14:00:00Z",
-    auftraege: [
-      {
-        id: "a6",
-        shift_id: "5",
-        user_id: "mock-user",
-        auftragsnummer: "F-6001",
-        beschreibung: "CNC-Programmierung",
-        startzeit: "13:00",
-        endzeit: "17:30",
-      },
-      {
-        id: "a7",
-        shift_id: "5",
-        user_id: "mock-user",
-        auftragsnummer: "G-7002",
-        startzeit: "17:30",
-        endzeit: "22:00",
-      },
-    ],
-  },
-];
-
 export default function HomePage() {
   const { profile } = useAuth();
 
   // Month navigation
   const [currentMonth, setCurrentMonth] = useState(
-    () => new Date(2026, 2, 1) // März 2026
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
 
-  // Shifts state (mock data for now)
-  const [shifts, setShifts] = useState<Schicht[]>(MOCK_SHIFTS);
+  // Shifts state
+  const [shifts, setShifts] = useState<Schicht[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Sheet state
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -145,18 +33,34 @@ export default function HomePage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingShift, setDeletingShift] = useState<Schicht | null>(null);
 
-  // Filter shifts for current month
-  const monthShifts = shifts.filter((s) => {
-    const d = new Date(s.datum + "T00:00:00");
-    return (
-      d.getMonth() === currentMonth.getMonth() &&
-      d.getFullYear() === currentMonth.getFullYear()
-    );
-  });
+  // Fetch shifts for current month
+  const fetchShifts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth() + 1;
+      const res = await fetch(`/api/shifts?year=${year}&month=${month}`);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Fehler beim Laden der Schichten.");
+      }
+      const data = await res.json();
+      setShifts(data.shifts ?? []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Fehler beim Laden der Schichten.";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentMonth]);
+
+  useEffect(() => {
+    fetchShifts();
+  }, [fetchShifts]);
 
   // Sort by date ascending
-  const sortedShifts = [...monthShifts].sort(
-    (a, b) => a.datum.localeCompare(b.datum)
+  const sortedShifts = [...shifts].sort((a, b) =>
+    a.datum.localeCompare(b.datum)
   );
 
   function handlePrevMonth() {
@@ -188,52 +92,31 @@ export default function HomePage() {
     setDeleteDialogOpen(true);
   }
 
-  const handleSheetSave = useCallback(
-    (data: {
-      datum: string;
-      schichttyp: SchichtTyp;
-      auftraege: Auftrag[];
-    }) => {
-      // TODO: wire up in /backend - save via Supabase
-      if (sheetMode === "edit" && editingShift) {
-        setShifts((prev) =>
-          prev.map((s) =>
-            s.id === editingShift.id
-              ? {
-                  ...s,
-                  datum: data.datum,
-                  schichttyp: data.schichttyp,
-                  auftraege: data.auftraege,
-                }
-              : s
-          )
-        );
-      } else {
-        const newShift: Schicht = {
-          id: crypto.randomUUID(),
-          user_id: profile?.id ?? "",
-          schichttyp: data.schichttyp,
-          datum: data.datum,
-          regulaere_stunden:
-            data.schichttyp === "frueh" ? 8.75 : 8.5,
-          erstellt_am: new Date().toISOString(),
-          auftraege: data.auftraege,
-        };
-        setShifts((prev) => [...prev, newShift]);
-      }
-    },
-    [sheetMode, editingShift, profile]
-  );
+  const handleShiftSaved = useCallback(() => {
+    fetchShifts();
+  }, [fetchShifts]);
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     if (!deletingShift) return;
-    // TODO: wire up in /backend - delete via Supabase
-    setShifts((prev) => prev.filter((s) => s.id !== deletingShift.id));
-    setDeleteDialogOpen(false);
-    setDeletingShift(null);
-    // Also close the sheet if it was open for this shift
-    if (editingShift?.id === deletingShift.id) {
-      setSheetOpen(false);
+    try {
+      const res = await fetch(`/api/shifts/${deletingShift.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Fehler beim Loeschen der Schicht.");
+      }
+      toast.success("Schicht geloescht.");
+      setDeleteDialogOpen(false);
+      // Close the sheet if it was open for this shift
+      if (editingShift?.id === deletingShift.id) {
+        setSheetOpen(false);
+      }
+      setDeletingShift(null);
+      fetchShifts();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Fehler beim Loeschen der Schicht.";
+      toast.error(message);
     }
   }
 
@@ -268,8 +151,15 @@ export default function HomePage() {
         onNext={handleNextMonth}
       />
 
-      {/* Shift list or empty state */}
-      {sortedShifts.length === 0 ? (
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="mt-2 text-sm text-muted-foreground">
+            Schichten werden geladen...
+          </p>
+        </div>
+      ) : sortedShifts.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
           <p className="text-muted-foreground">
             Noch keine Schichten erfasst.
@@ -296,7 +186,9 @@ export default function HomePage() {
       )}
 
       {/* Month summary */}
-      {sortedShifts.length > 0 && <MonthSummary shifts={sortedShifts} />}
+      {!isLoading && sortedShifts.length > 0 && (
+        <MonthSummary shifts={sortedShifts} />
+      )}
 
       {/* Shift Sheet */}
       <ShiftSheet
@@ -304,7 +196,7 @@ export default function HomePage() {
         onOpenChange={setSheetOpen}
         mode={sheetMode}
         shift={editingShift}
-        onSave={handleSheetSave}
+        onSaved={handleShiftSaved}
         onDelete={handleSheetDelete}
       />
 

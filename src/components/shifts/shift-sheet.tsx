@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -12,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   SHIFT_CONFIG,
@@ -29,11 +30,7 @@ interface ShiftSheetProps {
   onOpenChange: (open: boolean) => void;
   mode: SheetMode;
   shift?: Schicht | null;
-  onSave: (data: {
-    datum: string;
-    schichttyp: SchichtTyp;
-    auftraege: Auftrag[];
-  }) => void;
+  onSaved: () => void;
   onDelete?: () => void;
 }
 
@@ -50,12 +47,13 @@ export function ShiftSheet({
   onOpenChange,
   mode,
   shift,
-  onSave,
+  onSaved,
   onDelete,
 }: ShiftSheetProps) {
   const [datum, setDatum] = useState("");
   const [schichttyp, setSchichttyp] = useState<SchichtTyp>("frueh");
   const [auftraege, setAuftraege] = useState<Auftrag[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Order dialog state
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
@@ -80,11 +78,140 @@ export function ShiftSheet({
 
   const config = SHIFT_CONFIG[schichttyp];
 
-  const handleSave = useCallback(() => {
-    // TODO: wire up in /backend - save shift + orders via Supabase
-    onSave({ datum, schichttyp, auftraege });
-    onOpenChange(false);
-  }, [datum, schichttyp, auftraege, onSave, onOpenChange]);
+  // --- API helpers ---
+
+  async function createShift(): Promise<Schicht | null> {
+    const res = await fetch("/api/shifts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schichttyp, datum }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Fehler beim Erstellen der Schicht.");
+    }
+    return data.shift;
+  }
+
+  async function updateShift(): Promise<Schicht | null> {
+    if (!shift) return null;
+    const res = await fetch(`/api/shifts/${shift.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schichttyp, datum }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Fehler beim Aktualisieren der Schicht.");
+    }
+    return data.shift;
+  }
+
+  async function createOrder(shiftId: string, order: Auftrag): Promise<void> {
+    const res = await fetch(`/api/shifts/${shiftId}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        auftragsnummer: order.auftragsnummer,
+        cad_nummer: order.cad_nummer || undefined,
+        beschreibung: order.beschreibung || undefined,
+        startzeit: order.startzeit || undefined,
+        endzeit: order.endzeit || undefined,
+        notiz: order.notiz || undefined,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Fehler beim Erstellen des Auftrags.");
+    }
+    if (data.warnings) {
+      data.warnings.forEach((w: string) => toast.warning(w));
+    }
+  }
+
+  async function updateOrder(shiftId: string, order: Auftrag): Promise<void> {
+    const res = await fetch(`/api/shifts/${shiftId}/orders/${order.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        auftragsnummer: order.auftragsnummer,
+        cad_nummer: order.cad_nummer ?? null,
+        beschreibung: order.beschreibung ?? null,
+        startzeit: order.startzeit ?? null,
+        endzeit: order.endzeit ?? null,
+        notiz: order.notiz ?? null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Fehler beim Aktualisieren des Auftrags.");
+    }
+    if (data.warnings) {
+      data.warnings.forEach((w: string) => toast.warning(w));
+    }
+  }
+
+  async function deleteOrderApi(shiftId: string, orderId: string): Promise<void> {
+    const res = await fetch(`/api/shifts/${shiftId}/orders/${orderId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Fehler beim Loeschen des Auftrags.");
+    }
+  }
+
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      if (mode === "create") {
+        // Step 1: Create the shift
+        const newShift = await createShift();
+        if (!newShift) return;
+
+        // Step 2: Create all orders for this new shift
+        for (const order of auftraege) {
+          await createOrder(newShift.id, order);
+        }
+
+        toast.success("Schicht erfasst.");
+      } else if (mode === "edit" && shift) {
+        // Step 1: Update the shift itself
+        await updateShift();
+
+        // Step 2: Sync orders - determine which to create, update, delete
+        const existingOrderIds = new Set(shift.auftraege.map((o) => o.id));
+        const currentOrderIds = new Set(auftraege.map((o) => o.id));
+
+        // Orders to delete: in existing but not in current
+        const toDelete = shift.auftraege.filter((o) => !currentOrderIds.has(o.id));
+        // Orders to create: in current but not in existing (temp IDs from crypto.randomUUID)
+        const toCreate = auftraege.filter((o) => !existingOrderIds.has(o.id));
+        // Orders to update: in both
+        const toUpdate = auftraege.filter((o) => existingOrderIds.has(o.id));
+
+        for (const order of toDelete) {
+          await deleteOrderApi(shift.id, order.id);
+        }
+        for (const order of toCreate) {
+          await createOrder(shift.id, order);
+        }
+        for (const order of toUpdate) {
+          await updateOrder(shift.id, order);
+        }
+
+        toast.success("Schicht aktualisiert.");
+      }
+
+      onOpenChange(false);
+      onSaved();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Fehler beim Speichern.";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [datum, schichttyp, auftraege, mode, shift, onSaved, onOpenChange]);
 
   function handleAddOrder() {
     setEditingOrder(null);
@@ -109,7 +236,7 @@ export function ShiftSheet({
     notiz?: string;
   }) {
     if (editingOrder) {
-      // Update existing order
+      // Update existing order locally
       setAuftraege((prev) =>
         prev.map((o) =>
           o.id === editingOrder.id
@@ -118,11 +245,11 @@ export function ShiftSheet({
         )
       );
     } else {
-      // Add new order
+      // Add new order locally (will be saved to API on sheet save)
       const newOrder: Auftrag = {
         id: crypto.randomUUID(),
         shift_id: shift?.id ?? "",
-        user_id: "", // TODO: wire up in /backend
+        user_id: "",
         ...values,
       };
       setAuftraege((prev) => [...prev, newOrder]);
@@ -142,8 +269,8 @@ export function ShiftSheet({
             </SheetTitle>
             <SheetDescription>
               {mode === "edit"
-                ? "Änderungen an der Schicht vornehmen."
-                : "Neue Schicht für einen Arbeitstag erfassen."}
+                ? "Aenderungen an der Schicht vornehmen."
+                : "Neue Schicht fuer einen Arbeitstag erfassen."}
             </SheetDescription>
           </SheetHeader>
 
@@ -203,7 +330,7 @@ export function ShiftSheet({
                 <AlertDescription>
                   {overlaps.map(([a, b]) => (
                     <span key={`${a}-${b}`} className="block">
-                      Auftragszeiten überschneiden sich:{" "}
+                      Auftragszeiten ueberschneiden sich:{" "}
                       {auftraege[a]?.auftragsnummer} und{" "}
                       {auftraege[b]?.auftragsnummer}
                     </span>
@@ -215,7 +342,7 @@ export function ShiftSheet({
             {/* Orders section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Aufträge ({auftraege.length})</Label>
+                <Label>Auftraege ({auftraege.length})</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -224,13 +351,13 @@ export function ShiftSheet({
                   className="min-h-[44px] gap-1"
                 >
                   <Plus className="h-4 w-4" />
-                  Auftrag hinzufügen
+                  Auftrag hinzufuegen
                 </Button>
               </div>
 
               {auftraege.length === 0 ? (
                 <p className="py-4 text-center text-sm text-muted-foreground">
-                  Noch keine Aufträge hinzugefügt.
+                  Noch keine Auftraege hinzugefuegt.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -251,17 +378,26 @@ export function ShiftSheet({
           <div className="flex flex-col gap-2 border-t pt-4">
             <Button
               onClick={handleSave}
+              disabled={isSaving}
               className="min-h-[44px] w-full"
             >
-              Speichern
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Wird gespeichert...
+                </>
+              ) : (
+                "Speichern"
+              )}
             </Button>
             {mode === "edit" && onDelete && (
               <Button
                 variant="destructive"
                 onClick={onDelete}
+                disabled={isSaving}
                 className="min-h-[44px] w-full"
               >
-                Schicht löschen
+                Schicht loeschen
               </Button>
             )}
           </div>
